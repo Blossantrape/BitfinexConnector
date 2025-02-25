@@ -24,6 +24,9 @@ public class BitfinexRestClient : ITestConnector
     /// <summary>
     /// Получает список трейдов для валютной пары.
     /// </summary>
+    /// <param name="symbol"></param>
+    /// <param name="limit"></param>
+    /// <returns></returns>
     public async Task<List<Trade>> GetTradesAsync(string symbol, int limit = 50)
     {
         var url = $"{BaseUrl}trades/t{symbol.ToUpper()}/hist?limit={limit}";
@@ -49,8 +52,12 @@ public class BitfinexRestClient : ITestConnector
     }
 
     /// <summary>
-    /// Получает свечи для валютной пары и таймфрейма.
+    /// Получает список трейдов для валютной пары.
     /// </summary>
+    /// <param name="symbol"></param>
+    /// <param name="timeFrame"></param>
+    /// <param name="limit"></param>
+    /// <returns></returns>
     public async Task<List<Candle>> GetCandlesAsync(string symbol, string timeFrame, int limit = 50)
     {
         var url = $"{BaseUrl}candles/trade:{timeFrame}:t{symbol.ToUpper()}/hist?limit={limit}";
@@ -79,6 +86,8 @@ public class BitfinexRestClient : ITestConnector
     /// <summary>
     /// Получает данные о тикере валютной пары.
     /// </summary>
+    /// <param name="symbol"></param>
+    /// <returns></returns>
     public async Task<Ticker?> GetTickerAsync(string symbol)
     {
         var url = $"{BaseUrl}ticker/t{symbol.ToUpper()}";

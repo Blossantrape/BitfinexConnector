@@ -9,6 +9,7 @@ builder.Services.AddHttpClient<BitfinexRestClient>();
 
 // DI.
 builder.Services.AddScoped<BitfinexRestClient>();
+builder.Services.AddSingleton<BitfinexWebSocketClient>();
 
 // Настраиваем Swagger для тестирования API.
 builder.Services.AddEndpointsApiExplorer();
