@@ -3,13 +3,14 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем контроллеры.
+builder.Services.AddMemoryCache();
 builder.Services.AddControllers();
-builder.Services.AddHttpClient<BitfinexRestClient>();
+builder.Services.AddHttpClient<RestClient>();
 
 // DI.
-builder.Services.AddScoped<BitfinexRestClient>();
-builder.Services.AddSingleton<BitfinexWebSocketClient>();
+builder.Services.AddScoped<RestClient>();
+builder.Services.AddSingleton<WebSocketClient>();
+builder.Services.AddSingleton<CacheService>();
 
 // Настраиваем Swagger для тестирования API.
 builder.Services.AddEndpointsApiExplorer();

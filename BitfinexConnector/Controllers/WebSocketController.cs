@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BitfinexConnector.Controllers;
 
-public class BitfinexWebSocketController : ControllerBase
+public class WebSocketController : ControllerBase
 {
-    private readonly BitfinexWebSocketClient _webSocketClient;
+    private readonly WebSocketClient _webSocketClient;
 
-    public BitfinexWebSocketController(BitfinexWebSocketClient webSocketClient)
+    public WebSocketController(WebSocketClient webSocketClient)
     {
         _webSocketClient = webSocketClient;
     }

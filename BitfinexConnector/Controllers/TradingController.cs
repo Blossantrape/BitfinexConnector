@@ -8,13 +8,13 @@ namespace BitfinexConnector.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/bitfinex")]
-public class BitfinexController : ControllerBase
+public class TradingController : ControllerBase
 {
-    private readonly BitfinexRestClient _bitfinexClient;
+    private readonly RestClient _client;
 
-    public BitfinexController(BitfinexRestClient bitfinexClient)
+    public TradingController(RestClient client)
     {
-        _bitfinexClient = bitfinexClient;
+        _client = client;
     }
 
     /// <summary>
@@ -26,7 +26,7 @@ public class BitfinexController : ControllerBase
     [HttpGet("trades/{symbol}")]
     public async Task<IActionResult> GetTrades(string symbol, int limit = 50)
     {
-        var trades = await _bitfinexClient.GetTradesAsync(symbol, limit);
+        var trades = await _client.GetTradesAsync(symbol, limit);
         return Ok(trades);
     }
 
@@ -40,7 +40,7 @@ public class BitfinexController : ControllerBase
     [HttpGet("candles/{symbol}/{timeFrame}")]
     public async Task<IActionResult> GetCandles(string symbol, string timeFrame, int limit = 50)
     {
-        var candles = await _bitfinexClient.GetCandlesAsync(symbol, timeFrame, limit);
+        var candles = await _client.GetCandlesAsync(symbol, timeFrame, limit);
         return Ok(candles);
     }
 
@@ -52,7 +52,7 @@ public class BitfinexController : ControllerBase
     [HttpGet("ticker/{symbol}")]
     public async Task<IActionResult> GetTicker(string symbol)
     {
-        var ticker = await _bitfinexClient.GetTickerAsync(symbol);
+        var ticker = await _client.GetTickerAsync(symbol);
         return ticker != null ? Ok(ticker) : NotFound();
     }
 }

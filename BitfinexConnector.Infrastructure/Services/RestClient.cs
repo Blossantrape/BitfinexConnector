@@ -8,14 +8,14 @@ namespace BitfinexConnector.Infrastructure.Services;
 /// <summary>
 /// Клиент для взаимодействия с REST API Bitfinex.
 /// </summary>
-public class BitfinexRestClient : ITestConnector
+public class RestClient : ITestConnector
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger<BitfinexRestClient> _logger;
+    private readonly ILogger<RestClient> _logger;
 
     private const string BaseUrl = "https://api-pub.bitfinex.com/v2/";
 
-    public BitfinexRestClient(HttpClient httpClient, ILogger<BitfinexRestClient> logger)
+    public RestClient(HttpClient httpClient, ILogger<RestClient> logger)
     {
         _httpClient = httpClient;
         _logger = logger;

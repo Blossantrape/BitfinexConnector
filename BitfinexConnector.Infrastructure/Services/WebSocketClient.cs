@@ -9,21 +9,23 @@ namespace BitfinexConnector.Infrastructure.Services;
 /// <summary>
 /// Клиент для взаимодействия с WebSocket API Bitfinex.
 /// </summary>
-public class BitfinexWebSocketClient : IAsyncDisposable
+public class WebSocketClient : IAsyncDisposable
 {
     private readonly ClientWebSocket _webSocket;
-    private readonly ILogger<BitfinexWebSocketClient> _logger;
+    private readonly ILogger<WebSocketClient> _logger;
     private readonly CancellationTokenSource _cts;
+    private readonly CacheService _cacheService;
 
     public event Func<Ticker, Task>? OnTickerUpdate;
 
     private const string WebSocketUrl = "wss://api-pub.bitfinex.com/ws/2";
 
-    public BitfinexWebSocketClient(ILogger<BitfinexWebSocketClient> logger)
+    public WebSocketClient(ILogger<WebSocketClient> logger, CacheService cacheService)
     {
         _webSocket = new ClientWebSocket();
         _logger = logger;
         _cts = new CancellationTokenSource();
+        _cacheService = cacheService;
     }
 
     /// <summary>
