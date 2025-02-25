@@ -1,11 +1,16 @@
+using BitfinexConnector.Infrastructure.Services;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем контроллеры
+// Добавляем контроллеры.
 builder.Services.AddControllers();
+builder.Services.AddHttpClient<BitfinexRestClient>();
 
-// Настраиваем Swagger для тестирования API
+// DI.
+builder.Services.AddScoped<BitfinexRestClient>();
+
+// Настраиваем Swagger для тестирования API.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -19,7 +24,7 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Включаем Swagger в режиме разработки
+// Включаем Swagger в режиме разработки.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
