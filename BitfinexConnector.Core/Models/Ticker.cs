@@ -5,11 +5,39 @@ namespace BitfinexConnector.Core.Models;
 /// </summary>
 public class Ticker
 {
-    public string Symbol { get; set; } = string.Empty; // Символ валютной пары.
-    public decimal LastPrice { get; set; } // Последняя цена.
-    public decimal DailyChange { get; set; } // Изменение за сутки.
-    public decimal DailyChangePercent { get; set; } // Изменение за сутки в процентах.
-    public decimal Volume { get; set; } // Объём торгов.
-    public decimal High { get; set; } // Максимальная цена за сутки.
-    public decimal Low { get; set; } // Минимальная цена за сутки.
+    /// <summary>
+    /// Символ валютной пары.
+    /// </summary>
+    public string Symbol { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Последняя цена.
+    /// </summary>
+    public decimal LastPrice { get; set; } 
+    
+    /// <summary>
+    /// Изменение за сутки.
+    /// </summary>
+    public decimal DailyChange { get; set; } 
+    
+    /// <summary>
+    /// Изменение за сутки в процентах.
+    /// </summary>
+    public decimal DailyChangePercent { get; set; } 
+    
+    /// <summary>
+    /// Объём торгов.
+    /// </summary>
+    public decimal Volume { get; set; }
+    
+    /// <summary>
+    /// Максимальная цена за сутки.
+    /// </summary>
+    public decimal High { get; set; }
+    
+    
+    /// <summary>
+    /// Минимальная цена за сутки.
+    /// </summary>
+    public decimal Low { get; set; } 
 }

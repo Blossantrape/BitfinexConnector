@@ -5,10 +5,33 @@ namespace BitfinexConnector.Core.Models;
 /// </summary>
 public class Candle
 {
-    public DateTime Timestamp { get; set; } // Время свечи.
-    public decimal Open { get; set; } // Цена открытия.
-    public decimal Close { get; set; } // Цена закрытия.
-    public decimal High { get; set; } // Максимальная цена.
-    public decimal Low { get; set; } // Минимальная цена.
-    public decimal Volume { get; set; } // Объём торгов.
+    /// <summary>
+    /// Время свечи.
+    /// </summary>
+    public DateTime Timestamp { get; set; }
+    
+    /// <summary>
+    /// Цена открытия.
+    /// </summary>
+    public decimal Open { get; set; }
+    
+    /// <summary>
+    /// Цена закрытия.
+    /// </summary>
+    public decimal Close { get; set; }
+    
+    /// <summary>
+    /// Максимальная цена.
+    /// </summary>
+    public decimal High { get; set; }
+    
+    /// <summary>
+    /// Минимальная цена.
+    /// </summary>
+    public decimal Low { get; set; }
+    
+    /// <summary>
+    /// Объём торгов.
+    /// </summary>
+    public decimal Volume { get; set; }
 }
