@@ -148,58 +148,59 @@ public class WebSocketClientService : IAsyncDisposable
     /// </summary>
     /// <param name="array">Десериализованный массив объектов из JSON-сообщения.</param>
     private void ProcessMessage(List<object>? array)
+{
+    if (array is { Count: > 1 } && array[1] is JsonElement elem && elem.ValueKind == JsonValueKind.Array)
     {
-        if (array is { Count: > 1 } && array[1] is JsonElement elem && elem.ValueKind == JsonValueKind.Array)
-        {
-            var data = elem.EnumerateArray().ToArray();
+        var data = elem.EnumerateArray().ToArray();
 
-            // Если длина массива равна 4, предполагаем, что это данные трейда: [ID, MTS, AMOUNT, PRICE]
-            if (data.Length == 4)
+        // Если длина массива равна 4, предполагаем, что это данные трейда: [ID, MTS, AMOUNT, PRICE]
+        if (data.Length == 4)
+        {
+            var trade = new Trade
             {
-                var trade = new Trade
-                {
-                    Id = data[0].GetInt64(),
-                    Timestamp = data[1].GetInt64(),
-                    Amount = data[2].GetDecimal(),
-                    Price = data[3].GetDecimal()
-                };
-                _ = OnTradeReceived?.Invoke(trade);
-            }
-            // Если длина массива равна 6, предполагаем, что это данные свечи: [MTS, OPEN, CLOSE, HIGH, LOW, VOLUME]
-            else if (data.Length == 6)
+                Id = data[0].GetInt64(),
+                Timestamp = DateTimeOffset.FromUnixTimeMilliseconds(data[1].GetInt64()).UtcDateTime,
+                Amount = data[2].GetDecimal(),
+                Price = data[3].GetDecimal()
+            };
+            _ = OnTradeReceived?.Invoke(trade);
+        }
+        // Если длина массива равна 6, предполагаем, что это данные свечи: [MTS, OPEN, CLOSE, HIGH, LOW, VOLUME]
+        else if (data.Length == 6)
+        {
+            var candle = new Candle
             {
-                var candle = new Candle
-                {
-                    Timestamp = data[0].GetInt64(),
-                    Open = data[1].GetDecimal(),
-                    Close = data[2].GetDecimal(),
-                    High = data[3].GetDecimal(),
-                    Low = data[4].GetDecimal(),
-                    Volume = data[5].GetDecimal()
-                };
-                _ = OnCandleReceived?.Invoke(candle);
-            }
-            // Если длина массива >= 10, это данные тикера (формат: [ BID, BID_SIZE, ASK, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_PERC, LAST_PRICE, VOLUME, HIGH, LOW, ... ])
-            else if (data.Length >= 10)
+                Timestamp = DateTimeOffset.FromUnixTimeMilliseconds(data[0].GetInt64()).UtcDateTime,
+                Open = data[1].GetDecimal(),
+                Close = data[2].GetDecimal(),
+                High = data[3].GetDecimal(),
+                Low = data[4].GetDecimal(),
+                Volume = data[5].GetDecimal()
+            };
+            _ = OnCandleReceived?.Invoke(candle);
+        }
+        // Если длина массива >= 10, это данные тикера (формат: [ BID, BID_SIZE, ASK, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_PERC, LAST_PRICE, VOLUME, HIGH, LOW, ... ])
+        else if (data.Length >= 10)
+        {
+            var ticker = new Ticker
             {
-                var ticker = new Ticker
-                {
-                    Symbol = "Unknown",
-                    LastPrice = data[6].GetDecimal(),
-                    DailyChange = data[4].GetDecimal(),
-                    DailyChangePercent = data[5].GetDecimal(),
-                    Volume = data[7].GetDecimal(),
-                    High = data[8].GetDecimal(),
-                    Low = data[9].GetDecimal()
-                };
-                _ = OnTickerUpdate?.Invoke(ticker);
-            }
-            else
-            {
-                _logger.LogWarning("Получено некорректное сообщение от Bitfinex: {Json}", array);
-            }
+                Symbol = "Unknown",
+                LastPrice = data[6].GetDecimal(),
+                DailyChange = data[4].GetDecimal(),
+                DailyChangePercent = data[5].GetDecimal(),
+                Volume = data[7].GetDecimal(),
+                High = data[8].GetDecimal(),
+                Low = data[9].GetDecimal()
+            };
+            _ = OnTickerUpdate?.Invoke(ticker);
+        }
+        else
+        {
+            _logger.LogWarning("Получено некорректное сообщение от Bitfinex: {Json}", array);
         }
     }
+}
+
 
     /// <summary>
     /// Сериализует и отправляет сообщение через WebSocket.
