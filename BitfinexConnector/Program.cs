@@ -1,3 +1,4 @@
+using BitfinexConnector.Core.Abstractions;
 using BitfinexConnector.Infrastructure.Services;
 using Microsoft.OpenApi.Models;
 
@@ -5,12 +6,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMemoryCache();
 builder.Services.AddControllers();
-builder.Services.AddHttpClient<RestClient>();
+builder.Services.AddHttpClient<ITestConnector, RestClientService>();
 
 // DI.
-builder.Services.AddScoped<RestClient>();
-builder.Services.AddSingleton<WebSocketClient>();
+builder.Services.AddScoped<RestClientService>();
+builder.Services.AddSingleton<WebSocketClientService>();
 builder.Services.AddSingleton<CacheService>();
+builder.Services.AddScoped<PortfolioCalculator>();
 
 // Настраиваем Swagger для тестирования API.
 builder.Services.AddEndpointsApiExplorer();
