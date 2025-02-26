@@ -1,5 +1,6 @@
 using BitfinexConnector.Core.Abstractions;
 using BitfinexConnector.Core.Models;
+using Microsoft.Extensions.Logging;
 
 namespace BitfinexConnector.Infrastructure.Services
 {
@@ -11,10 +12,12 @@ namespace BitfinexConnector.Infrastructure.Services
     public class PortfolioCalculator
     {
         private readonly ITestConnector _connector;
+        private readonly ILogger _logger;
 
-        public PortfolioCalculator(ITestConnector connector)
+        public PortfolioCalculator(ITestConnector connector, ILogger<PortfolioCalculator> logger)
         {
             _connector = connector;
+            _logger = logger;
         }
 
         /// <summary>
@@ -26,11 +29,26 @@ namespace BitfinexConnector.Infrastructure.Services
         public async Task<Dictionary<string, decimal>> CalculatePortfolioAsync(Dictionary<string, decimal> balances)
         {
             // Получаем тикеры для конвертации в USDT.
-            // В запросе передаем пары с USDT.
-            Ticker btcTicker = await _connector.GetTickerAsync("BTCUSDT");
-            Ticker xrpTicker = await _connector.GetTickerAsync("XRPUSDT");
-            Ticker xmrTicker = await _connector.GetTickerAsync("XMRUSDT");
-            Ticker dashTicker = await _connector.GetTickerAsync("DASHUSDT");
+            Ticker? btcTicker = await _connector.GetTickerAsync("BTCUSDT");
+            Ticker? xrpTicker = await _connector.GetTickerAsync("XRPUSDT");
+            Ticker? xmrTicker = await _connector.GetTickerAsync("XMRUSDT");
+            Ticker? dashTicker = await _connector.GetTickerAsync("DASHUSDT");
+
+            // Логируем, какие тикеры не были получены
+            if (btcTicker == null)
+                _logger.LogError("Не удалось получить тикер для BTCUSDT");
+            if (xrpTicker == null)
+                _logger.LogError("Не удалось получить тикер для XRPUSDT");
+            if (xmrTicker == null)
+                _logger.LogError("Не удалось получить тикер для XMRUSDT");
+            if (dashTicker == null)
+                _logger.LogError("Не удалось получить тикер для DASHUSDT");
+
+            // Если хотя бы один тикер не получен, выбрасываем исключение
+            if (btcTicker == null || xrpTicker == null || xmrTicker == null || dashTicker == null)
+            {
+                throw new Exception("Не удалось получить данные тикера для одной или нескольких валют.");
+            }
 
             // Рассчитываем общую стоимость портфеля в USDT.
             decimal totalUSDT = 0;
@@ -43,8 +61,7 @@ namespace BitfinexConnector.Infrastructure.Services
             if (balances.TryGetValue("DASH", out decimal dashBalance))
                 totalUSDT += dashBalance * dashTicker.LastPrice;
 
-            // Конвертируем общую стоимость обратно в каждую валюту:
-            // Для каждой валюты значение = totalUSDT / (курс валюты к USDT).
+            // Конвертируем общую стоимость обратно в каждую валюту.
             var result = new Dictionary<string, decimal>
             {
                 ["USDT"] = totalUSDT,
@@ -53,7 +70,7 @@ namespace BitfinexConnector.Infrastructure.Services
                 ["XMR"] = xmrTicker.LastPrice != 0 ? totalUSDT / xmrTicker.LastPrice : 0,
                 ["DASH"] = dashTicker.LastPrice != 0 ? totalUSDT / dashTicker.LastPrice : 0
             };
-
+            
             return result;
         }
     }

@@ -18,10 +18,10 @@ public class WebSocketClientService : IAsyncDisposable
 
     /// <summary> Событие обновления тикера. </summary>
     public event Func<Ticker, Task>? OnTickerUpdate;
-    
+
     /// <summary> Событие получения нового трейда. </summary>
     public event Func<Trade, Task>? OnTradeReceived;
-    
+
     /// <summary> Событие получения новой свечи. </summary>
     public event Func<Candle, Task>? OnCandleReceived;
 
@@ -145,13 +145,40 @@ public class WebSocketClientService : IAsyncDisposable
     /// <summary>
     /// Обрабатывает входящее сообщение, определяя тип данных (трейд, свеча или тикер)
     /// по количеству элементов во вложенном массиве, и вызывает соответствующее событие.
+    /// Поддерживает как одиночное обновление, так и снимок (snapshot) – массив массивов.
     /// </summary>
     /// <param name="array">Десериализованный массив объектов из JSON-сообщения.</param>
     private void ProcessMessage(List<object>? array)
-{
-    if (array is { Count: > 1 } && array[1] is JsonElement elem && elem.ValueKind == JsonValueKind.Array)
     {
-        var data = elem.EnumerateArray().ToArray();
+        if (array is { Count: > 1 } && array[1] is JsonElement elem && elem.ValueKind == JsonValueKind.Array)
+        {
+            // Получаем вложенный массив данных
+            var dataElements = elem.EnumerateArray().ToArray();
+
+            // Если первый элемент сам является массивом, то это снимок (snapshot) – обрабатываем каждый элемент отдельно.
+            if (dataElements.Length > 0 && dataElements[0].ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in dataElements)
+                {
+                    ProcessDataElement(item);
+                }
+            }
+            else
+            {
+                // Иначе, обрабатываем одиночное обновление.
+                ProcessDataElement(elem);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Обрабатывает один элемент данных, который является массивом значений.
+    /// Определяет тип сообщения по количеству элементов и вызывает соответствующее событие.
+    /// </summary>
+    /// <param name="element">JsonElement, содержащий массив данных.</param>
+    private void ProcessDataElement(JsonElement element)
+    {
+        var data = element.EnumerateArray().ToArray();
 
         // Если длина массива равна 4, предполагаем, что это данные трейда: [ID, MTS, AMOUNT, PRICE]
         if (data.Length == 4)
@@ -196,10 +223,9 @@ public class WebSocketClientService : IAsyncDisposable
         }
         else
         {
-            _logger.LogWarning("Получено некорректное сообщение от Bitfinex: {Json}", array);
+            _logger.LogWarning("Получено некорректное сообщение от Bitfinex: {Json}", element.ToString());
         }
     }
-}
 
 
     /// <summary>

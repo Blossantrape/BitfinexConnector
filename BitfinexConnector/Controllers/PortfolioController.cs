@@ -1,7 +1,7 @@
 using BitfinexConnector.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BitfinexConnector.API.Controllers
+namespace BitfinexConnector.Controllers
 {
     /// <summary>
     /// Контроллер для расчёта и получения баланса портфеля.
