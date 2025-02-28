@@ -1,25 +1,26 @@
+using System.Reflection;
 using BitfinexConnector.Core.Abstractions;
 using BitfinexConnector.Infrastructure.Services;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMemoryCache();
+//builder.Services.AddMemoryCache();
 
 // Правильная регистрация HttpClient + интерфейса
 builder.Services.AddHttpClient<ITestConnector, RestClientService>();
 
 builder.Services.AddSingleton<WebSocketClientService>();
-builder.Services.AddSingleton<CacheService>();
+//builder.Services.AddSingleton<CacheService>();
 builder.Services.AddScoped<PortfolioCalculator>();
 
 builder.Services.AddControllers();
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("https://localhost:7106")
+        policy.AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -34,6 +35,11 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "API для получения данных с биржи Bitfinex"
     });
+
+    // Включение XML-документации
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
 });
 
 var app = builder.Build();
@@ -45,8 +51,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
+app.UseCors("AllowAll");
 app.UseAuthorization();
-app.UseCors();
 app.MapControllers();
 app.Run();
 
