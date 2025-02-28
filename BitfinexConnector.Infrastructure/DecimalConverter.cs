@@ -13,8 +13,8 @@ public class DecimalConverter : JsonConverter<decimal>
         return reader.TokenType switch
         {
             JsonTokenType.Number => reader.GetDecimal(),
-            JsonTokenType.String => decimal.TryParse(reader.GetString(), out var num) 
-                ? num 
+            JsonTokenType.String => decimal.TryParse(reader.GetString(), out var num)
+                ? num
                 : throw new JsonException(),
             _ => throw new JsonException()
         };

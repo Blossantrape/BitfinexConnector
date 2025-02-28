@@ -8,22 +8,22 @@ namespace Tests.xUnit.Services
 {
     public class PortfolioCalculatorServiceTests
     {
-        private readonly Mock<ITestConnector> _connectorMock = new();
-        private readonly ILogger<PortfolioCalculatorService> _logger;
+        private ILogger<PortfolioCalculatorService> CreateLogger() =>
+            Mock.Of<ILogger<PortfolioCalculatorService>>();
 
-        public PortfolioCalculatorServiceTests()
+        private Mock<ITestConnector> CreateConnectorMock()
         {
-            _logger = Mock.Of<ILogger<PortfolioCalculatorService>>();
-            
+            var connectorMock = new Mock<ITestConnector>();
             // Базовая настройка тикеров для большинства тестов
-            _connectorMock.Setup(c => c.GetTickerAsync("BTCUSDT"))
+            connectorMock.Setup(c => c.GetTickerAsync("BTCUSDT"))
                 .ReturnsAsync(new Ticker { LastPrice = 50000 });
-            _connectorMock.Setup(c => c.GetTickerAsync("XRPUSDT"))
+            connectorMock.Setup(c => c.GetTickerAsync("XRPUSDT"))
                 .ReturnsAsync(new Ticker { LastPrice = 1 });
-            _connectorMock.Setup(c => c.GetTickerAsync("XMRUSDT"))
+            connectorMock.Setup(c => c.GetTickerAsync("XMRUSDT"))
                 .ReturnsAsync(new Ticker { LastPrice = 200 });
-            _connectorMock.Setup(c => c.GetTickerAsync("DASHUSDT"))
+            connectorMock.Setup(c => c.GetTickerAsync("DASHUSDT"))
                 .ReturnsAsync(new Ticker { LastPrice = 100 });
+            return connectorMock;
         }
 
         [Fact]
@@ -36,7 +36,8 @@ namespace Tests.xUnit.Services
                 { "XRP", 1000 }
             };
 
-            var service = new PortfolioCalculatorService(_connectorMock.Object, _logger);
+            var connectorMock = CreateConnectorMock();
+            var service = new PortfolioCalculatorService(connectorMock.Object, CreateLogger());
 
             // Act
             var result = await service.CalculatePortfolioAsync(balances);
@@ -48,21 +49,22 @@ namespace Tests.xUnit.Services
             Assert.Equal(51000m / 200, result["XMR"]);
             Assert.Equal(51000m / 100, result["DASH"]);
 
-            VerifyAllTickersRequested();
+            VerifyAllTickersRequested(connectorMock);
         }
 
         [Fact]
         public async Task CalculatePortfolioAsync_MissingTicker_ThrowsException()
         {
             // Arrange
-            _connectorMock.Reset();
-            _connectorMock.Setup(c => c.GetTickerAsync("BTCUSDT"))
+            var connectorMock = CreateConnectorMock();
+            // Настраиваем отсутствие тикера для BTCUSDT
+            connectorMock.Setup(c => c.GetTickerAsync("BTCUSDT"))
                 .ReturnsAsync((Ticker)null);
 
-            var service = new PortfolioCalculatorService(_connectorMock.Object, _logger);
+            var service = new PortfolioCalculatorService(connectorMock.Object, CreateLogger());
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => 
+            await Assert.ThrowsAsync<Exception>(() =>
                 service.CalculatePortfolioAsync(new Dictionary<string, decimal>()));
         }
 
@@ -76,26 +78,27 @@ namespace Tests.xUnit.Services
                 { "XRP", 0 }
             };
 
-            var service = new PortfolioCalculatorService(_connectorMock.Object, _logger);
+            var connectorMock = CreateConnectorMock();
+            var service = new PortfolioCalculatorService(connectorMock.Object, CreateLogger());
 
             // Act
             var result = await service.CalculatePortfolioAsync(balances);
 
             // Assert
             Assert.All(result.Values, v => Assert.Equal(0m, v));
-            VerifyAllTickersRequested();
+            VerifyAllTickersRequested(connectorMock);
         }
 
         [Fact]
         public async Task CalculatePortfolioAsync_ZeroPriceInTicker_SkipsDivisionByZero()
         {
             // Arrange
-            _connectorMock.Setup(c => c.GetTickerAsync("BTCUSDT"))
+            var connectorMock = CreateConnectorMock();
+            connectorMock.Setup(c => c.GetTickerAsync("BTCUSDT"))
                 .ReturnsAsync(new Ticker { LastPrice = 0 });
 
             var balances = new Dictionary<string, decimal> { { "BTC", 1 } };
-
-            var service = new PortfolioCalculatorService(_connectorMock.Object, _logger);
+            var service = new PortfolioCalculatorService(connectorMock.Object, CreateLogger());
 
             // Act
             var result = await service.CalculatePortfolioAsync(balances);
@@ -107,15 +110,15 @@ namespace Tests.xUnit.Services
             Assert.Equal(0m, result["XMR"]);
             Assert.Equal(0m, result["DASH"]);
 
-            VerifyAllTickersRequested();
+            VerifyAllTickersRequested(connectorMock);
         }
 
-        private void VerifyAllTickersRequested()
+        private void VerifyAllTickersRequested(Mock<ITestConnector> connectorMock)
         {
-            _connectorMock.Verify(c => c.GetTickerAsync("BTCUSDT"), Times.Once);
-            _connectorMock.Verify(c => c.GetTickerAsync("XRPUSDT"), Times.Once);
-            _connectorMock.Verify(c => c.GetTickerAsync("XMRUSDT"), Times.Once);
-            _connectorMock.Verify(c => c.GetTickerAsync("DASHUSDT"), Times.Once);
+            connectorMock.Verify(c => c.GetTickerAsync("BTCUSDT"), Times.Once);
+            connectorMock.Verify(c => c.GetTickerAsync("XRPUSDT"), Times.Once);
+            connectorMock.Verify(c => c.GetTickerAsync("XMRUSDT"), Times.Once);
+            connectorMock.Verify(c => c.GetTickerAsync("DASHUSDT"), Times.Once);
         }
     }
 }

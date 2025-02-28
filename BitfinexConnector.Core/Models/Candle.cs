@@ -9,27 +9,27 @@ public class Candle
     /// Время свечи.
     /// </summary>
     public DateTime Timestamp { get; set; }
-    
+
     /// <summary>
     /// Цена открытия.
     /// </summary>
     public decimal Open { get; set; }
-    
+
     /// <summary>
     /// Цена закрытия.
     /// </summary>
     public decimal Close { get; set; }
-    
+
     /// <summary>
     /// Максимальная цена.
     /// </summary>
     public decimal High { get; set; }
-    
+
     /// <summary>
     /// Минимальная цена.
     /// </summary>
     public decimal Low { get; set; }
-    
+
     /// <summary>
     /// Объём торгов.
     /// </summary>

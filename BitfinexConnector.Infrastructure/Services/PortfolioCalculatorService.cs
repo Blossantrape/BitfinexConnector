@@ -70,7 +70,7 @@ namespace BitfinexConnector.Infrastructure.Services
                 ["XMR"] = xmrTicker.LastPrice != 0 ? totalUSDT / xmrTicker.LastPrice : 0,
                 ["DASH"] = dashTicker.LastPrice != 0 ? totalUSDT / dashTicker.LastPrice : 0
             };
-            
+
             return result;
         }
     }

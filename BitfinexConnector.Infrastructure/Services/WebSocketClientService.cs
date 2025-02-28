@@ -189,7 +189,7 @@ namespace BitfinexConnector.Infrastructure.Services
                     Amount = data[2].GetDecimal(),
                     Price = data[3].GetDecimal()
                 };
-                _ = OnTradeReceived?.Invoke(trade);  // Корректный вызов
+                _ = OnTradeReceived?.Invoke(trade); // Корректный вызов
             }
             else if (data.Length == 6)
             {
@@ -202,7 +202,7 @@ namespace BitfinexConnector.Infrastructure.Services
                     Low = data[4].GetDecimal(),
                     Volume = data[5].GetDecimal()
                 };
-                _ = OnCandleReceived?.Invoke(candle);  // Корректный вызов
+                _ = OnCandleReceived?.Invoke(candle); // Корректный вызов
             }
             else if (data.Length >= 10)
             {
@@ -216,7 +216,7 @@ namespace BitfinexConnector.Infrastructure.Services
                     High = data[8].GetDecimal(),
                     Low = data[9].GetDecimal()
                 };
-                _ = OnTickerUpdate?.Invoke(ticker);  // Корректный вызов
+                _ = OnTickerUpdate?.Invoke(ticker); // Корректный вызов
             }
             else
             {
@@ -266,7 +266,8 @@ namespace BitfinexConnector.Infrastructure.Services
         public async ValueTask DisposeAsync()
         {
             _cts.Cancel();
-            await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Закрытие соединения", CancellationToken.None);
+            await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Закрытие соединения",
+                CancellationToken.None);
             _webSocket.Dispose();
         }
     }

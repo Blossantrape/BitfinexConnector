@@ -45,9 +45,9 @@ namespace Tests.xUnit.Services
         private string InvokeValidateSymbol(string symbol)
         {
             var method = _connector.GetType()
-                .GetMethod("ValidateSymbol", 
-                    System.Reflection.BindingFlags.NonPublic | 
-                    System.Reflection.BindingFlags.Instance);
+                .GetMethod("ValidateSymbol",
+                    BindingFlags.NonPublic |
+                    BindingFlags.Instance);
 
             try
             {
@@ -85,7 +85,8 @@ namespace Tests.xUnit.Services
         {
             var result = await _connector.GetTradesAsync(symbol, limit);
             Assert.NotNull(result);
-            Assert.All(result, trade => {
+            Assert.All(result, trade =>
+            {
                 Assert.True(trade.Price > 0);
                 Assert.NotEqual(0, trade.Amount);
             });
@@ -108,7 +109,8 @@ namespace Tests.xUnit.Services
         {
             var result = await _connector.GetCandlesAsync(symbol, timeFrame, limit);
             Assert.NotNull(result);
-            Assert.All(result, candle => {
+            Assert.All(result, candle =>
+            {
                 Assert.True(candle.High >= candle.Low);
                 Assert.True(candle.Volume >= 0);
             });

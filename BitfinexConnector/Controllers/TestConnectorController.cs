@@ -41,7 +41,8 @@ namespace BitfinexConnector.Controllers
         /// <param name="limit">Количество записей.</param>
         /// <returns>Список свечей.</returns>
         [HttpGet("candles/{symbol}/{timeframe}")]
-        public async Task<ActionResult<List<Candle>>> GetCandles(string symbol, string timeframe, [FromQuery] int limit = 100)
+        public async Task<ActionResult<List<Candle>>> GetCandles(string symbol, string timeframe,
+            [FromQuery] int limit = 100)
         {
             var candles = await _connector.GetCandlesAsync(symbol, timeframe, limit);
             return Ok(candles);
