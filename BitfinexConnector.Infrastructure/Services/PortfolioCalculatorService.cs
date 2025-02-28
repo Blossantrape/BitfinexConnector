@@ -9,12 +9,12 @@ namespace BitfinexConnector.Infrastructure.Services
     /// Балансы по каждой криптовалюте конвертируются в USDT, суммируются,
     /// а затем общее значение конвертируется обратно в каждую валюту.
     /// </summary>
-    public class PortfolioCalculator
+    public class PortfolioCalculatorService
     {
         private readonly ITestConnector _connector;
         private readonly ILogger _logger;
 
-        public PortfolioCalculator(ITestConnector connector, ILogger<PortfolioCalculator> logger)
+        public PortfolioCalculatorService(ITestConnector connector, ILogger<PortfolioCalculatorService> logger)
         {
             _connector = connector;
             _logger = logger;

@@ -5,14 +5,9 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//builder.Services.AddMemoryCache();
-
-// Правильная регистрация HttpClient + интерфейса
-builder.Services.AddHttpClient<ITestConnector, RestClientService>();
-
+builder.Services.AddHttpClient<ITestConnector, TestConnectorService>();
 builder.Services.AddSingleton<WebSocketClientService>();
-//builder.Services.AddSingleton<CacheService>();
-builder.Services.AddScoped<PortfolioCalculator>();
+builder.Services.AddScoped<PortfolioCalculatorService>();
 
 builder.Services.AddControllers();
 

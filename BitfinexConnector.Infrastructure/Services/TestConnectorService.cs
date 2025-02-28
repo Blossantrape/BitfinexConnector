@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BitfinexConnector.Core.Abstractions;
@@ -7,20 +6,18 @@ using Microsoft.Extensions.Logging;
 
 namespace BitfinexConnector.Infrastructure.Services;
 
-public class RestClientService : ITestConnector
+public class TestConnectorService : ITestConnector
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger<RestClientService> _logger;
-    
+    private readonly ILogger<TestConnectorService> _logger;
     private const string BaseUrl = "https://api-pub.bitfinex.com/v2/";
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public RestClientService(HttpClient httpClient, ILogger<RestClientService> logger)
+    public TestConnectorService(HttpClient httpClient, ILogger<TestConnectorService> logger)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
-        // Настройки для безопасного парсинга чисел
+
         _jsonOptions = new JsonSerializerOptions
         {
             NumberHandling = JsonNumberHandling.AllowReadingFromString,
@@ -28,16 +25,16 @@ public class RestClientService : ITestConnector
         };
     }
 
-    public async Task<List<Trade>> GetTradesAsync(string symbol, int limit = 50)
+    public async Task<List<Trade>> GetTradesAsync(string symbol, int limit)
     {
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol не может быть пустым", nameof(symbol));
-
-        var validatedSymbol = ValidateSymbol(symbol);
-        var url = $"{BaseUrl}trades/t{validatedSymbol}/hist?limit={limit}";
-
         try
         {
+            if (string.IsNullOrWhiteSpace(symbol))
+                throw new ArgumentException("Symbol не может быть пустым", nameof(symbol));
+
+            var validatedSymbol = ValidateSymbol(symbol);
+            var url = $"{BaseUrl}trades/t{validatedSymbol}/hist?limit={limit}";
+
             using var response = await _httpClient.GetAsync(url);
         
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -57,9 +54,9 @@ public class RestClientService : ITestConnector
                 Symbol = symbol
             }).ToList() ?? new List<Trade>();
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        catch (ArgumentException ex)
         {
-            _logger.LogWarning("Торговая пара {Symbol} не найдена", symbol);
+            _logger.LogWarning(ex, "Неверный символ: {Symbol}", symbol);
             return new List<Trade>();
         }
         catch (Exception ex)
@@ -69,7 +66,7 @@ public class RestClientService : ITestConnector
         }
     }
 
-    public async Task<List<Candle>> GetCandlesAsync(string symbol, string timeFrame, int limit = 50)
+    public async Task<List<Candle>> GetCandlesAsync(string symbol, string timeFrame, int limit)
     {
         if (string.IsNullOrWhiteSpace(symbol))
             throw new ArgumentException("Symbol не может быть пустым", nameof(symbol));
@@ -82,7 +79,7 @@ public class RestClientService : ITestConnector
         try
         {
             using var response = await _httpClient.GetAsync(url);
-        
+            
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return new List<Candle>();
 
@@ -101,11 +98,6 @@ public class RestClientService : ITestConnector
                 Volume = candle[5].GetDecimal()
             }).ToList() ?? new List<Candle>();
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-        {
-            _logger.LogWarning("Данные свечей для {Symbol} не найдены", symbol);
-            return new List<Candle>();
-        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Ошибка при получении свечей для {Symbol}", symbol);
@@ -115,20 +107,21 @@ public class RestClientService : ITestConnector
 
     public async Task<Ticker?> GetTickerAsync(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol не может быть пустым", nameof(symbol));
-
-        var validatedSymbol = ValidateSymbol(symbol);
-        var url = $"{BaseUrl}ticker/t{validatedSymbol}";
-
         try
         {
+            if (string.IsNullOrWhiteSpace(symbol))
+                throw new ArgumentException("Symbol не может быть пустым", nameof(symbol));
+
+            var validatedSymbol = ValidateSymbol(symbol);
+            var url = $"{BaseUrl}ticker/t{validatedSymbol}";
+
             using var response = await _httpClient.GetAsync(url);
         
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Не удалось получить тикер для {Symbol}, код: {StatusCode}", symbol, response.StatusCode);
                 return null;
-
-            response.EnsureSuccessStatusCode();
+            }
 
             var json = await response.Content.ReadAsStringAsync();
             var data = JsonSerializer.Deserialize<List<JsonElement>>(json, _jsonOptions);
@@ -140,16 +133,12 @@ public class RestClientService : ITestConnector
             {
                 Symbol = symbol,
                 LastPrice = data[6].GetDecimal(),
-                DailyChange = data[4].GetDecimal(),
-                DailyChangePercent = data[5].GetDecimal(),
-                Volume = data[7].GetDecimal(),
-                High = data[8].GetDecimal(),
-                Low = data[9].GetDecimal()
+                Volume = data[7].GetDecimal()
             };
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        catch (ArgumentException ex)
         {
-            _logger.LogWarning("Тикер для {Symbol} не найден", symbol);
+            _logger.LogWarning(ex, "Неверный символ: {Symbol}", symbol);
             return null;
         }
         catch (Exception ex)
@@ -161,36 +150,25 @@ public class RestClientService : ITestConnector
 
     private string ValidateSymbol(string symbol)
     {
-        // Bitfinex использует формат BTCUSD вместо BTCUSDT
-        var cleanedSymbol = symbol
-            .Replace("USDT", "USD")
-            .Replace(" ", "")
-            .ToUpper();
+        if (string.IsNullOrWhiteSpace(symbol))
+            throw new ArgumentException("Symbol не может быть пустым", nameof(symbol));
 
-        if (cleanedSymbol.Length != 6)
-            throw new ArgumentException("Неверный формат символа. Ожидается 6 символов (например: BTCUSD)");
+        var cleanedSymbol = symbol
+            .Replace(" ", "")
+            .Replace("-", "") // Удаляем дефисы
+            .ToUpper()
+            .Replace("USDT", "USD");
+
+        if (cleanedSymbol == "DASHUSD")
+            cleanedSymbol = "DSHUSD";
+
+        if (!cleanedSymbol.EndsWith("USD"))
+            throw new ArgumentException($"Неверный формат символа: {symbol}");
+
+        var baseCurrency = cleanedSymbol.Substring(0, cleanedSymbol.Length - 3);
+        if (baseCurrency.Length < 3)
+            throw new ArgumentException($"Неверный формат символа: {symbol}");
 
         return cleanedSymbol;
-    }
-}
-
-// Конвертер для безопасного парсинга decimal
-public class DecimalConverter : JsonConverter<decimal>
-{
-    public override decimal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        return reader.TokenType switch
-        {
-            JsonTokenType.Number => reader.GetDecimal(),
-            JsonTokenType.String => decimal.TryParse(reader.GetString(), out var result) 
-                ? result 
-                : throw new JsonException("Неверный формат decimal"),
-            _ => throw new JsonException("Неверный формат decimal")
-        };
-    }
-
-    public override void Write(Utf8JsonWriter writer, decimal value, JsonSerializerOptions options)
-    {
-        writer.WriteNumberValue(value);
     }
 }

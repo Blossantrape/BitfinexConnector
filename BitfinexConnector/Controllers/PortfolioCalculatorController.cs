@@ -9,13 +9,13 @@ namespace BitfinexConnector.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class PortfolioController : ControllerBase
+    public class PortfolioCalculatorController : ControllerBase
     {
-        private readonly PortfolioCalculator _calculator;
+        private readonly PortfolioCalculatorService _calculatorService;
 
-        public PortfolioController(PortfolioCalculator calculator)
+        public PortfolioCalculatorController(PortfolioCalculatorService calculatorService)
         {
-            _calculator = calculator;
+            _calculatorService = calculatorService;
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace BitfinexConnector.Controllers
                 { "DASH", 30m }
             };
 
-            var result = await _calculator.CalculatePortfolioAsync(balances);
+            var result = await _calculatorService.CalculatePortfolioAsync(balances);
             return Ok(result);
         }
     }
