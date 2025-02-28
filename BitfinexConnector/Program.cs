@@ -5,16 +5,26 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMemoryCache();
-builder.Services.AddControllers();
+
+// Правильная регистрация HttpClient + интерфейса
 builder.Services.AddHttpClient<ITestConnector, RestClientService>();
 
-// DI.
-builder.Services.AddScoped<RestClientService>();
 builder.Services.AddSingleton<WebSocketClientService>();
 builder.Services.AddSingleton<CacheService>();
 builder.Services.AddScoped<PortfolioCalculator>();
 
-// Настраиваем Swagger для тестирования API.
+builder.Services.AddControllers();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("https://localhost:7106")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -28,16 +38,16 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Включаем Swagger в режиме разработки.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+app.UseRouting();
 app.UseAuthorization();
+app.UseCors();
 app.MapControllers();
 app.Run();
 
-// Это нужно для тестов (WebApplicationFactory<Program>)
 public partial class Program { }

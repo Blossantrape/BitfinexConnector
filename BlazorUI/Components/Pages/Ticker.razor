@@ -1,0 +1,69 @@
+@page "/ticker"
+@namespace BlazorUI.Pages
+@using BitfinexConnector.Core.Models
+@using BitfinexConnector.Core.Abstractions
+@inject ITestConnector TestConnector
+
+<h3>Информация о тикере</h3>
+
+@if (isLoading)
+{
+    <p>Загрузка...</p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p style="color: red;">Ошибка: @errorMessage</p>
+}
+else if (tickerData is not null)
+{
+    <p><b>Символ:</b> @tickerData.Symbol</p>
+    <p><b>Цена:</b> @tickerData.LastPrice</p>
+    <p><b>Объем:</b> @tickerData.Volume</p>
+    <p><b>Макс. цена:</b> @tickerData.High</p>
+    <p><b>Мин. цена:</b> @tickerData.Low</p>
+}
+
+<button @onclick="LoadTicker" class="btn btn-primary">Загрузить BTCUSDT</button>
+
+@code {
+    private BitfinexConnector.Core.Models.Ticker? tickerData;
+    private bool isLoading;
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("Компонент Ticker инициализирован");
+    }
+
+    private async Task LoadTicker()
+    {
+        try
+        {
+            Console.WriteLine("Нажата кнопка, начинается загрузка...");
+            isLoading = true;
+            errorMessage = null;
+
+            tickerData = await TestConnector.GetTickerAsync("BTCUSDT");
+
+            if (tickerData is null)
+            {
+                errorMessage = "Данные не получены.";
+                Console.WriteLine("Получены пустые данные");
+            }
+            else
+            {
+                Console.WriteLine($"Получены данные: {tickerData.Symbol}");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка: {ex.Message}";
+            Console.WriteLine(errorMessage);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

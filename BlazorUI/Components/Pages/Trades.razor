@@ -1,0 +1,83 @@
+@page "/trades"
+@namespace BlazorUI.Pages
+@using BitfinexConnector.Core.Models
+@using BitfinexConnector.Core.Abstractions
+@inject ITestConnector TestConnector
+
+<h3>Информация о трейдах</h3>
+
+<div>
+    <label for="symbol">Символ:</label>
+    <input id="symbol" @bind="symbol" placeholder="Введите символ (например, BTCUSD)" />
+</div>
+
+<div>
+    <label for="limit">Лимит:</label>
+    <input id="limit" type="number" @bind="limit" placeholder="Максимальное количество трейдов" />
+</div>
+
+<button @onclick="LoadTrades" class="btn btn-primary">Загрузить трейды</button>
+
+@if (isLoading)
+{
+    <p>Загрузка...</p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p style="color: red;">Ошибка: @errorMessage</p>
+}
+else if (tradesData is not null && tradesData.Any())
+{
+    <p>Получено трейдов: @tradesData.Count</p>
+    @foreach (var trade in tradesData)
+    {
+        <div>
+            <p><b>ID трейда:</b> @trade.Id</p>
+            <p><b>Время:</b> @trade.Timestamp</p>
+            <p><b>Цена:</b> @trade.Price</p>
+            <p><b>Объём:</b> @trade.Amount</p>
+            <p><b>Символ:</b> @trade.Symbol</p>
+            <hr />
+        </div>
+    }
+}
+
+@code {
+    private List<Trade> tradesData; // Список трейдов
+    private bool isLoading; // Флаг загрузки
+    private string errorMessage; // Сообщение об ошибке
+    private string symbol = "BTCUSD"; // Символ по умолчанию
+    private int limit = 50; // Лимит трейдов по умолчанию
+
+    private async Task LoadTrades()
+    {
+        try
+        {
+            Console.WriteLine("Нажата кнопка, начинается загрузка...");
+            isLoading = true;
+            errorMessage = null;
+
+            // Загружаем данные о трейдах
+            tradesData = await TestConnector.GetTradesAsync(symbol, limit);
+
+            if (tradesData is null || !tradesData.Any())
+            {
+                errorMessage = "Данные не получены.";
+                Console.WriteLine("Получены пустые данные");
+            }
+            else
+            {
+                Console.WriteLine($"Получено {tradesData.Count} трейдов.");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка: {ex.Message}";
+            Console.WriteLine(errorMessage);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
